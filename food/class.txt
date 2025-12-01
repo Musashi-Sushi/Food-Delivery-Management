@@ -1,0 +1,456 @@
+// ======================
+// ENUMS
+// ======================
+
+enum OrderStatus { pending, accepted, preparing, ready, completed, cancelled }
+enum DeliveryStatus { assigned, pickedUp, onTheWay, delivered }
+enum PaymentStatus { pending, paid, failed, refunded }
+enum PaymentMethod { card, cash, online }
+enum AdminRole { superAdmin, finance, operations }
+
+// ======================
+// ABSTRACT USER
+// ======================
+
+abstract class User {
+  int id;
+  String name;
+  String email;
+  String phone;
+  String password;
+  DateTime createdAt;
+
+  User({
+    required this.id,
+    required this.name,
+    required this.email,
+    required this.phone,
+    required this.password,
+    required this.createdAt,
+  });
+
+  void login();
+  void logout();
+  void updateProfile();
+}
+
+// ======================
+// CUSTOMER
+// ======================
+
+class Customer extends User {
+  Cart cart;
+  List<Order> orderHistory = [];
+
+  Customer({
+    required super.id,
+    required super.name,
+    required super.email,
+    required super.phone,
+    required super.password,
+    required super.createdAt,
+    required this.cart,
+  });
+
+  void register();
+  @override
+  void login();
+  @override
+  void logout();
+  @override
+  void updateProfile();
+
+  List<Restaurant> searchRestaurantByName(String name);
+  List<Restaurant> searchRestaurantByLocation(String location);
+  List<Restaurant> searchRestaurantByCategory(String category);
+
+  List<MenuItem> viewRestaurantMenu(int restaurantId);
+
+  void addToCart(int menuItemId, int quantity);
+  void removeFromCart(int menuItemId);
+  void clearCart();
+
+  void placeOrder();
+  void cancelOrder(int orderId);
+  OrderStatus viewOrderStatus(int orderId);
+  DeliveryStatus trackDelivery(int orderId);
+
+  void submitReview(int restaurantId, int orderId, int rating, String comment);
+
+  void makePayment(int orderId, double amount, PaymentMethod method);
+  void applyPromoCode(String code);
+
+  void requestRefund(int paymentId, String reason);
+}
+
+// ======================
+// RESTAURANT OWNER
+// ======================
+
+class RestaurantOwner extends User {
+  int restaurantId;
+
+  RestaurantOwner({
+    required super.id,
+    required super.name,
+    required super.email,
+    required super.phone,
+    required super.password,
+    required super.createdAt,
+    required this.restaurantId,
+  });
+
+  void addMenuItem(MenuItem item);
+  void updateMenuItem(int itemId, {String? name, double? price});
+  void deleteMenuItem(int itemId);
+  void categorizeItem(int itemId, int categoryId);
+  void markItemOutOfStock(int itemId);
+
+  void acceptOrder(int orderId);
+  void rejectOrder(int orderId);
+  void updateOrderStatus(int orderId, OrderStatus status);
+  Order viewOrderDetails(int orderId);
+}
+
+// ======================
+// DELIVERY PERSON
+// ======================
+
+class DeliveryPerson extends User {
+  DeliveryStatus status;
+
+  DeliveryPerson({
+    required super.id,
+    required super.name,
+    required super.email,
+    required super.phone,
+    required super.password,
+    required super.createdAt,
+    required this.status,
+  });
+
+  List<Delivery> viewAssignedDeliveries();
+  void acceptDeliveryAssignment(int deliveryId);
+  void updateDeliveryStatus(int deliveryId, DeliveryStatus status);
+  void updateLiveLocation(double lat, double lng);
+  void notifyCustomer(int deliveryId);
+}
+
+// ======================
+// ADMIN
+// ======================
+
+class Admin extends User {
+  AdminRole role;
+
+  Admin({
+    required super.id,
+    required super.name,
+    required super.email,
+    required super.phone,
+    required super.password,
+    required super.createdAt,
+    required this.role,
+  });
+
+  void manageUser(int userId, String action);
+
+  void viewDashboard();
+  void generateReport();
+  void viewDeliveryStats();
+  void viewProductPerformance();
+
+  void configureTaxes(double tax);
+  void configureDeliveryFee(double fee);
+  void configureGlobalDiscount(double discount);
+
+  void processRefund(int refundId);
+  void manageDispute(int disputeId);
+
+  void viewAuditLogs();
+  void monitorSystemActivity();
+}
+
+// ======================
+// RESTAURANT
+// ======================
+
+class Restaurant {
+  int id;
+  String name;
+  String location;
+  String cuisine;
+  double rating;
+  int ownerId;
+
+  Restaurant({
+    required this.id,
+    required this.name,
+    required this.location,
+    required this.cuisine,
+    required this.rating,
+    required this.ownerId,
+  });
+
+  List<MenuItem> getMenu();
+}
+
+// ======================
+// MENU ITEM
+// ======================
+
+class MenuItem {
+  int id;
+  String name;
+  String description;
+  double price;
+  int restaurantId;
+  int categoryId;
+  bool available;
+
+  MenuItem({
+    required this.id,
+    required this.name,
+    required this.description,
+    required this.price,
+    required this.restaurantId,
+    required this.categoryId,
+    required this.available,
+  });
+}
+
+// ======================
+// CATEGORY
+// ======================
+
+class Category {
+  int id;
+  String name;
+
+  Category({
+    required this.id,
+    required this.name,
+  });
+}
+
+// ======================
+// CART
+// ======================
+
+class Cart {
+  int id;
+  int customerId;
+  List<CartItem> items = [];
+
+  Cart({
+    required this.id,
+    required this.customerId,
+  });
+
+  void addItem(int menuItemId, int quantity);
+  void removeItem(int itemId);
+  void clearCart();
+  double calculateTotal();
+}
+
+// ======================
+// CART ITEM
+// ======================
+
+class CartItem {
+  int id;
+  int cartId;
+  int menuItemId;
+  int quantity;
+
+  CartItem({
+    required this.id,
+    required this.cartId,
+    required this.menuItemId,
+    required this.quantity,
+  });
+}
+
+// ======================
+// ORDER
+// ======================
+
+class Order {
+  int id;
+  int customerId;
+  int restaurantId;
+  OrderStatus status;
+  DeliveryStatus deliveryStatus;
+  DateTime createdAt;
+  DateTime updatedAt;
+  List<OrderItem> items = [];
+  double totalAmount;
+
+  Order({
+    required this.id,
+    required this.customerId,
+    required this.restaurantId,
+    required this.status,
+    required this.deliveryStatus,
+    required this.createdAt,
+    required this.updatedAt,
+    required this.totalAmount,
+  });
+
+  double calculateTotal();
+}
+
+// ======================
+// ORDER ITEM
+// ======================
+
+class OrderItem {
+  int id;
+  int orderId;
+  int menuItemId;
+  int quantity;
+  double price;
+
+  OrderItem({
+    required this.id,
+    required this.orderId,
+    required this.menuItemId,
+    required this.quantity,
+    required this.price,
+  });
+}
+
+// ======================
+// PAYMENT
+// ======================
+
+class Payment {
+  int id;
+  int orderId;
+  double amount;
+  PaymentMethod method;
+  PaymentStatus status;
+  String transactionId;
+  DateTime createdAt;
+  DateTime? completedAt;
+
+  Payment({
+    required this.id,
+    required this.orderId,
+    required this.amount,
+    required this.method,
+    required this.status,
+    required this.transactionId,
+    required this.createdAt,
+    this.completedAt,
+  });
+
+  void processPayment();
+}
+
+// ======================
+// REVIEW
+// ======================
+
+class Review {
+  int id;
+  int customerId;
+  int restaurantId;
+  int orderId;
+  int rating;
+  String comment;
+  DateTime date;
+
+  Review({
+    required this.id,
+    required this.customerId,
+    required this.restaurantId,
+    required this.orderId,
+    required this.rating,
+    required this.comment,
+    required this.date,
+  });
+}
+
+// ======================
+// DELIVERY
+// ======================
+
+class Delivery {
+  int id;
+  int orderId;
+  int riderId;
+  DeliveryStatus status;
+  double currentLat;
+  double currentLng;
+  DateTime assignedAt;
+  DateTime? deliveredAt;
+
+  Delivery({
+    required this.id,
+    required this.orderId,
+    required this.riderId,
+    required this.status,
+    required this.currentLat,
+    required this.currentLng,
+    required this.assignedAt,
+    this.deliveredAt,
+  });
+
+  void assignRider(int riderId);
+  void updateStatus(DeliveryStatus newStatus);
+}
+
+// ======================
+// REFUND
+// ======================
+
+class Refund {
+  int id;
+  int paymentId;
+  int orderId;
+  String reason;
+  PaymentStatus status;
+  DateTime createdAt;
+
+  Refund({
+    required this.id,
+    required this.paymentId,
+    required this.orderId,
+    required this.reason,
+    required this.status,
+    required this.createdAt,
+  });
+}
+
+// ======================
+// RECEIPT
+// ======================
+
+class Receipt {
+  int id;
+  int orderId;
+  double totalAmount;
+  DateTime createdAt;
+
+  Receipt({
+    required this.id,
+    required this.orderId,
+    required this.totalAmount,
+    required this.createdAt,
+  });
+}
+
+// ======================
+// SYSTEM SERVICE
+// ======================
+
+class SystemService {
+  String generateUniqueId();
+  String generateOrderId();
+
+  double calculateBillTotal(double subtotal, double tax, double deliveryFee, double discount);
+  Receipt generateReceipt(int orderId);
+
+  void assignDelivery(int orderId);
+}
